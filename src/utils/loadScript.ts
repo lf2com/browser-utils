@@ -4,8 +4,12 @@ import waitForPageLoaded from './waitForPageLoaded';
 /**
  * Loads script.
  */
-async function loadScript(src: string, loadRawText = false): Promise<void> {
+async function loadScript(source: string, loadRawText = false): Promise<void> {
   return new Promise((resolve, reject) => {
+    const src = (/^\./.test(source)
+      ? `${globalThis.location.href.replace(/\w+(\.\w+)?$/, '')}${source}`
+      : source
+    );
     const script = document.createElement('script');
 
     if (loadRawText) {
