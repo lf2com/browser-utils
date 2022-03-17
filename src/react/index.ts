@@ -28,6 +28,33 @@ loadScript(reactPath)
       throw new ReferenceError('Babel.transform is not defined');
     }
 
+    const doReact = async (reactScript: Element) => {
+      if (!(reactScript instanceof HTMLScriptElement)) {
+        return;
+      }
+      if (!/^text\/babel$/.test(reactScript.type)) {
+        return;
+      }
+
+      logger.log('Transpiling react');
+
+      const { src } = reactScript;
+      const reactText = (src.length > 0
+        ? await fetchUrlText(src)
+        : reactScript.innerHTML
+      )
+        .trim();
+      const jsText = transform(reactText, {
+        presets: ['env', 'react', 'typescript'],
+        filename: '.tsx',
+      }).code;
+      const jsScript = document.createElement('script');
+
+      jsScript.innerHTML = jsText;
+      reactScript.replaceWith(jsScript);
+      logger.info('Transpiled');
+    };
+
     logger.info('Loaded React. Starting to transforming...');
 
     await (
@@ -38,20 +65,7 @@ loadScript(reactPath)
         logger.log(`Transforming ${reactIndex + 1} / ${reactScripts.length}`);
 
         try {
-          const { src } = reactScript;
-          const reactText = (src.length > 0
-            ? await fetchUrlText(src)
-            : reactScript.innerHTML
-          );
-          const jsText = transform(reactText, {
-            presets: ['env', 'react', 'typescript'],
-            filename: '.tsx',
-          }).code;
-          const jsScript = document.createElement('script');
-
-          jsScript.innerText = jsText;
-          reactScript.replaceWith(jsScript);
-          logger.info('Transpiled');
+          doReact(reactScript);
         } catch (error) {
           const { message } = error as Error;
 
@@ -59,6 +73,18 @@ loadScript(reactPath)
         }
       }, Promise.resolve());
     logger.info('Transformed all scripts');
+
+    new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          doReact(node as Element);
+        });
+      });
+    })
+      .observe(document, {
+        childList: true,
+        subtree: true,
+      });
   })
   .catch((error) => {
     const detail = error?.message ?? 'Not found';

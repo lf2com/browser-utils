@@ -22,6 +22,33 @@ loadScript(tsPath)
       throw new ReferenceError('ts.transpile is not defined');
     }
 
+    const doTs = async (tsScript: Element) => {
+      if (!(tsScript instanceof HTMLScriptElement)) {
+        return;
+      }
+      if (
+        !/^text\/typescript$/.test(tsScript.type)
+        && !/\.ts$/i.test(tsScript.src)
+      ) {
+        return;
+      }
+
+      logger.log('Transpiling typescript');
+
+      const { src } = tsScript;
+      const tsText = (src.length > 0
+        ? await fetchUrlText(src)
+        : tsScript.innerHTML
+      )
+        .trim();
+      const jsText = transpile(tsText);
+      const jsScript = document.createElement('script');
+
+      jsScript.innerHTML = jsText;
+      tsScript.replaceWith(jsScript);
+      logger.info('Transpiled');
+    };
+
     logger.info('Loaded TypeScript. Starting to transpile...');
 
     await Array.from(document.getElementsByTagName('script'))
@@ -31,20 +58,10 @@ loadScript(tsPath)
       ))
       .reduce(async (prevPromise, tsScript, tsIndex, tsScripts) => {
         await prevPromise;
-        logger.log(`Transpiling ${tsIndex + 1} / ${tsScripts.length}`);
 
         try {
-          const { src } = tsScript;
-          const tsText = (src.length > 0
-            ? await fetchUrlText(src)
-            : tsScript.innerHTML
-          );
-          const jsText = transpile(tsText);
-          const jsScript = document.createElement('script');
-
-          jsScript.innerText = jsText;
-          tsScript.replaceWith(jsScript);
-          logger.info('Transpiled');
+          logger.log(`Transpiling ${tsIndex + 1} / ${tsScripts.length}`);
+          doTs(tsScript);
         } catch (error) {
           const { message } = error as Error;
 
@@ -52,6 +69,18 @@ loadScript(tsPath)
         }
       }, Promise.resolve());
     logger.info('Transpiled all scripts');
+
+    new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          doTs(node as Element);
+        });
+      });
+    })
+      .observe(document, {
+        childList: true,
+        subtree: true,
+      });
   })
   .catch((error) => {
     const detail = error?.message ?? 'Not found';

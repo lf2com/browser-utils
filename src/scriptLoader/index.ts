@@ -1,8 +1,10 @@
 import Logger from '../Logger';
 import loadScript from '../utils/loadScript';
+import { waitForDOMContentLoaded } from '../utils/waitForPageLoaded';
 
 const logger = new Logger('[SL]');
 const currentScript = document.currentScript!;
+const loadEvent = currentScript.getAttribute('event:load') ?? 'scriptload';
 const styleLoading = document.createElement('style');
 const domLoading = document.createElement('div');
 const idLoading = `loading_${Date.now()}`;
@@ -15,8 +17,6 @@ const setLoadingMessage = (message: string, progress?: number) => {
     domLoading.style.setProperty('--progress', `${percentage}%`);
   }
 };
-const rootPath = (currentScript.getAttribute('src') as string)
-  .replace(/\/[^/]+?$/, '');
 const modules = (currentScript.getAttribute('module') ?? '')
   .split(/[|;,\s]/)
   .map((s) => s.trim())
@@ -25,7 +25,7 @@ const loadNextModule = async (index = 0) => {
   const module = modules[index];
 
   if (module) {
-    const root = `${rootPath}/${module}`;
+    const root = module;
     const defaultPath = `${root}.js`;
     const progress = (index + 1) / modules.length;
 
@@ -52,7 +52,7 @@ const loadNextModule = async (index = 0) => {
 };
 
 domLoading.id = idLoading;
-styleLoading.innerText = `
+styleLoading.innerHTML = `
   #${idLoading} ~ * {
     display: none;
   }
@@ -98,7 +98,10 @@ styleLoading.innerText = `
   }
 `;
 document.head.append(styleLoading);
-document.body.prepend(domLoading);
+waitForDOMContentLoaded()
+  .then(() => {
+    document.body.prepend(domLoading);
+  });
 
 async function onLoad() {
   logger.log('Loading modules');
@@ -108,7 +111,7 @@ async function onLoad() {
   setTimeout(() => {
     domLoading.remove();
     styleLoading.remove();
-    window.dispatchEvent(new CustomEvent('loadscript'));
+    window.dispatchEvent(new CustomEvent(loadEvent));
   }, 1000);
 }
 
@@ -117,3 +120,5 @@ if (document.readyState === 'complete') {
 } else {
   window.addEventListener('load', onLoad);
 }
+
+(globalThis as any).loadScript = loadScript;

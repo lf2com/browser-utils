@@ -22,6 +22,54 @@ loadScript(sassPath)
       throw new ReferenceError('sass.compile is not defined');
     }
 
+    const doScss = async (scssDom: Element) => {
+      const isValidNode = (
+        scssDom instanceof HTMLStyleElement
+        || scssDom instanceof HTMLLinkElement
+      );
+
+      if (!isValidNode) {
+        return;
+      }
+      if (
+        !/^text\/scss$/.test(scssDom.getAttribute('type') as string)
+        && !/\.scss$/i.test(scssDom.getAttribute('href') as string)
+      ) {
+        return;
+      }
+
+      logger.log('Compiling scss');
+
+      const scssText = (scssDom instanceof HTMLStyleElement
+        ? scssDom.innerHTML
+        : await fetchUrlText(scssDom.getAttribute('href') as string)
+      )
+        .trim();
+
+      if (scssText.length > 0) {
+        await new Promise<void>((resolve) => {
+          compile(scssText, (result: any) => {
+            const { status } = result;
+
+            if (status !== 0) {
+              const { column, line, message } = result;
+
+              throw new Error(`${message} @${line}:${column}`);
+            }
+
+            const { text } = result;
+            const style = document.createElement('style');
+
+            style.innerHTML = text;
+            scssDom.replaceWith(style);
+            resolve();
+          });
+        });
+      }
+
+      logger.info('Compiled');
+    };
+
     logger.info('Loaded Sass. Starting to compile...');
 
     await (Array.from(document.getElementsByTagName('style'))
@@ -34,33 +82,10 @@ loadScript(sassPath)
       ) as (HTMLStyleElement | HTMLLinkElement)[])
       .reduce(async (prevPromise, scssDom, scssDomIndex, scssDoms) => {
         await prevPromise;
-        logger.log(`Compiling ${scssDomIndex + 1} / ${scssDoms.length}`);
 
         try {
-          const scssText = (scssDom instanceof HTMLStyleElement
-            ? scssDom.innerHTML
-            : await fetchUrlText(scssDom.href)
-          );
-
-          await new Promise<void>((resolve) => {
-            compile(scssText, (result: any) => {
-              const { status } = result;
-
-              if (status !== 0) {
-                const { column, line, message } = result;
-
-                throw new Error(`${message} @${line}:${column}`);
-              }
-
-              const { text } = result;
-              const style = document.createElement('style');
-
-              style.innerText = text;
-              scssDom.replaceWith(style);
-              resolve();
-            });
-          });
-          logger.info('Compiled');
+          logger.log(`Compiling ${scssDomIndex + 1} / ${scssDoms.length}`);
+          doScss(scssDom);
         } catch (error) {
           const { message } = error as Error;
 
@@ -68,6 +93,18 @@ loadScript(sassPath)
         }
       }, Promise.resolve());
     logger.info('Compiled all styles');
+
+    new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          doScss(node as Element);
+        });
+      });
+    })
+      .observe(document, {
+        childList: true,
+        subtree: true,
+      });
   })
   .catch((error) => {
     const detail = error?.message ?? 'Not found';
