@@ -22,7 +22,7 @@
     console.info('Development mode');
   } catch (e) {
     try {
-      await loadScript('../dist/scriptLoader.js');
+      await loadScript('../../dist/scriptLoader.js');
     } catch (err) {
       console.warn('Failed to load JS browser utils', err);
     }
