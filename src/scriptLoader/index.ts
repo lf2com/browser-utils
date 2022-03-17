@@ -4,6 +4,7 @@ import { waitForDOMContentLoaded } from '../utils/waitForPageLoaded';
 
 const logger = new Logger('[SL]');
 const currentScript = document.currentScript!;
+const currentRoot = currentScript.getAttribute('src')?.replace(/\w+(\.\w+)?$/, '');
 const loadEvent = currentScript.getAttribute('event:load') ?? 'scriptload';
 const styleLoading = document.createElement('style');
 const domLoading = document.createElement('div');
@@ -25,7 +26,10 @@ const loadNextModule = async (index = 0) => {
   const module = modules[index];
 
   if (module) {
-    const root = module;
+    const root = (/^~/.test(module)
+      ? `${currentRoot}${module.replace(/^~\//, '')}`
+      : module
+    );
     const defaultPath = `${root}.js`;
     const progress = (index + 1) / modules.length;
 
