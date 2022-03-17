@@ -11,6 +11,8 @@ async function loadScript(source: string, loadRawText = false): Promise<void> {
       : source
     );
     const script = document.createElement('script');
+    console.log(`\`- source: ${source}`);
+    console.log(`\`- src: ${src}`);
 
     if (loadRawText) {
       fetchUrlText(src)
