@@ -116,6 +116,7 @@ async function onLoad() {
     domLoading.remove();
     styleLoading.remove();
     window.dispatchEvent(new CustomEvent(loadEvent));
+    currentScript.remove();
   }, 1000);
 }
 
