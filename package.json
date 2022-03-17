@@ -1,6 +1,6 @@
 {
   "name": "@lf2com/browser-utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Browser utils that can be used directly in HTML",
   "scripts": {
     "dev": "webpack serve --mode development --progress",
