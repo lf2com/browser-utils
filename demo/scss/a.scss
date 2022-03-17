@@ -1,4 +1,7 @@
 body::before {
   content: 'This code runs in SCSS';
+  margin: 0.5em;
+  padding: 0.5em;
+  border: 1px solid #ccc;
   display: block;
 }

@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 (async () => {
   const { currentScript } = document;
+  const rootPath = currentScript.src.replace(/\w+\.\w+$/, '');
   const loadScript = async (src) => new Promise((resolve, reject) => {
     const script = document.createElement('script');
 
@@ -22,7 +23,7 @@
     console.info('Development mode');
   } catch (e) {
     try {
-      await loadScript('../../dist/scriptLoader.js');
+      await loadScript(`${rootPath}../../dist/scriptLoader.js`);
     } catch (err) {
       console.warn('Failed to load JS browser utils', err);
     }
