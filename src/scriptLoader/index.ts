@@ -1,6 +1,6 @@
 import Logger from '../Logger';
 import loadScript from '../utils/loadScript';
-import { waitForDOMContentLoaded } from '../utils/waitForPageLoaded';
+import waitForPageLoaded from '../utils/waitForPageLoaded';
 
 const logger = new Logger('[SL]');
 const currentScript = document.currentScript!;
@@ -102,7 +102,7 @@ styleLoading.innerHTML = `
   }
 `;
 document.head.append(styleLoading);
-waitForDOMContentLoaded()
+waitForPageLoaded()
   .then(() => {
     document.body.prepend(domLoading);
   });
