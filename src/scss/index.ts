@@ -22,19 +22,22 @@ loadScript(sassPath)
       throw new ReferenceError('sass.compile is not defined');
     }
 
-    const doScss = async (scssDom: Element) => {
-      const isValidNode = (
-        scssDom instanceof HTMLStyleElement
-        || scssDom instanceof HTMLLinkElement
-      );
-
-      if (!isValidNode) {
-        return;
+    const verifyScssDom = (dom: Element): dom is HTMLLinkElement | HTMLStyleElement => {
+      if (dom instanceof HTMLLinkElement) {
+        return /\.scss$/i.test(dom.href);
       }
-      if (
-        !/^text\/scss$/.test(scssDom.getAttribute('type') as string)
-        && !/\.scss$/i.test(scssDom.getAttribute('href') as string)
-      ) {
+
+      if (dom instanceof HTMLStyleElement) {
+        const type = dom.getAttribute('type') ?? '';
+
+        return /^text\/scss$/.test(type);
+      }
+
+      return false;
+    };
+
+    const doScss = async (scssDom: Element) => {
+      if (!verifyScssDom(scssDom)) {
         return;
       }
 
@@ -73,9 +76,7 @@ loadScript(sassPath)
     logger.info('Loaded Sass. Starting to compile...');
 
     await (Array.from(document.getElementsByTagName('style'))
-      .filter((style) => (
-        /^text\/scss$/.test(style.getAttribute('type') as string)
-      ))
+      .filter((style) => verifyScssDom(style))
       .concat(
         Array.from(document.getElementsByTagName('link'))
           .filter((link) => /\.scss$/i.test(link.href)),

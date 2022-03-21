@@ -19,9 +19,9 @@
     <div id="app2"></div>
     <div id="app3"></div>
   </body>
-  <script type="text/babel" src="a.jsx"></script>
-  <script type="text/babel" src="a.tsx"></script>
-  <script type="text/babel">
+  <script src="a.jsx"></script>
+  <script src="a.tsx"></script>
+  <script type="text/react">
     interface AppProps {
       text: string;
     }
@@ -33,7 +33,7 @@
     );
 
     ReactDOM.render(
-      <App text="This code runs in React, too" />,
+      <App text={`This code runs in <script type="text/react">`} />,
       document.getElementById('app3'),
     );
   </script>

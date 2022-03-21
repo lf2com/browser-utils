@@ -22,14 +22,30 @@ loadScript(tsPath)
       throw new ReferenceError('ts.transpile is not defined');
     }
 
-    const doTs = async (tsScript: Element) => {
-      if (!(tsScript instanceof HTMLScriptElement)) {
-        return;
+    const verifyTsDom = (dom: Element): dom is HTMLScriptElement => {
+      if (!(dom instanceof HTMLScriptElement)) {
+        return false;
       }
-      if (
-        !/^text\/typescript$/.test(tsScript.type)
-        && !/\.ts$/i.test(tsScript.src)
-      ) {
+
+      const { src, type } = dom;
+
+      if (src.length > 0) {
+        if (!/\.ts$/i.test(src)) {
+          return false;
+        }
+      } else if (type.length > 0) {
+        if (!/^text\/typescript$/.test(type)) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return true;
+    };
+
+    const doTs = async (tsScript: Element) => {
+      if (!verifyTsDom(tsScript)) {
         return;
       }
 
@@ -52,10 +68,7 @@ loadScript(tsPath)
     logger.info('Loaded TypeScript. Starting to transpile...');
 
     await Array.from(document.getElementsByTagName('script'))
-      .filter((script) => (
-        /^text\/typescript$/.test(script.type)
-        || /\.ts$/i.test(script.src)
-      ))
+      .filter((script) => verifyTsDom(script))
       .reduce(async (prevPromise, tsScript, tsIndex, tsScripts) => {
         await prevPromise;
 

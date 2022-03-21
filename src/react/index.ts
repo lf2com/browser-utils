@@ -28,11 +28,30 @@ loadScript(reactPath)
       throw new ReferenceError('Babel.transform is not defined');
     }
 
-    const doReact = async (reactScript: Element) => {
-      if (!(reactScript instanceof HTMLScriptElement)) {
-        return;
+    const verifyReactDom = (dom: Element): dom is HTMLScriptElement => {
+      if (!(dom instanceof HTMLScriptElement)) {
+        return false;
       }
-      if (!/^text\/babel$/.test(reactScript.type)) {
+
+      const { src, type } = dom;
+
+      if (src.length > 0) {
+        if (!/\.[jt]sx$/i.test(src)) {
+          return false;
+        }
+      } else if (type.length > 0) {
+        if (!/^text\/react$/.test(type)) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return true;
+    };
+
+    const doReact = async (reactScript: Element) => {
+      if (!verifyReactDom(reactScript)) {
         return;
       }
 
@@ -57,9 +76,8 @@ loadScript(reactPath)
 
     logger.info('Loaded React. Starting to transforming...');
 
-    await (
-      Array.from(document.querySelectorAll('script[type="text/babel"]')) as HTMLScriptElement[]
-    )
+    await Array.from(document.getElementsByTagName('script'))
+      .filter((script) => verifyReactDom(script))
       .reduce(async (prevPromise, reactScript, reactIndex, reactScripts) => {
         await prevPromise;
         logger.log(`Transforming ${reactIndex + 1} / ${reactScripts.length}`);

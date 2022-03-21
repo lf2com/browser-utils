@@ -1,11 +1,13 @@
 /* eslint-disable no-console */
 (() => {
-  function doStuff(msg: string): void {
+  type DoStuffProps = (msg: string) => void;
+
+  const doStuff: DoStuffProps = (msg) => {
     const dom = document.createElement('div');
 
     dom.innerText = msg;
     document.body.append(dom);
-  }
+  };
 
-  doStuff('This code runs in TypeScript');
+  doStuff('This code runs in <script src="*.ts">');
 })();

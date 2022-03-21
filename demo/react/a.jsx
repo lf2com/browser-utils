@@ -1,10 +1,10 @@
-const App = () => (
+const App = ({ text }) => (
   <div>
-    This code runs in React
+    {text}
   </div>
 );
 
 ReactDOM.render(
-  <App />,
+  <App text={`This code runs in <script src="*.jsx">`} />,
   document.getElementById('app1'),
 );

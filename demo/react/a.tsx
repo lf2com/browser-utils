@@ -9,6 +9,6 @@ const App = ({ text }: AppProps) => (
 );
 
 ReactDOM.render(
-  <App text="This code runs also in React" />,
+  <App text={`This code runs in <script src="*.tsx">`} />,
   document.getElementById('app2'),
 );

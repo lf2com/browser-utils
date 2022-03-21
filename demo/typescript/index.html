@@ -16,14 +16,16 @@
     <script src="./a.ts"></script>
     <script type="text/typescript">
       (() => {
-        function doStuff(msg: string): void {
+        type DoStuffProps = (msg: string) => void;
+      
+        const doStuff: DoStuffProps = (msg) => {
           const dom = document.createElement('div');
       
           dom.innerText = msg;
           document.body.append(dom);
-        }
+        };
 
-        doStuff('This code runs in TypeScript, too');
+        doStuff('This code runs in <script type="text/typescript">');
       })();
     </script>
   </head>
