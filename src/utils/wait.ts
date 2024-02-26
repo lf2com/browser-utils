@@ -1,10 +1,9 @@
 /**
- * Waits for {ms} milliseconds.
+ * Waits for milliseconds
  */
-async function wait(ms = 0): Promise<void> {
-  return new Promise((resolve) => {
+const wait = async (ms = 0): Promise<void> =>
+  new Promise(resolve => {
     setTimeout(resolve, ms);
   });
-}
 
 export default wait;

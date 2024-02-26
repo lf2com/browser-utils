@@ -1,38 +1,38 @@
-import fetchUrlText from './fetchUrlText';
-import waitForPageLoaded from './waitForPageLoaded';
+import fetchText from './fetchText';
 
 /**
- * Loads script.
+ * Loads script
  */
-async function loadScript(source: string, loadRawText = false): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const src = (/^\./.test(source)
-      ? `${globalThis.location.href.replace(/\w+(\.\w+)?$/, '')}${source}`
-      : source
-    );
-    const script = document.createElement('script');
+const loadScript = async (
+  source: string,
+  loadRawText = false
+): Promise<void> => {
+  const src = /^\./.test(source)
+    ? `${globalThis.location.href.replace(/\w+(\.\w+)?$/, '')}${source}`
+    : source;
+  const script = document.createElement('script');
 
-    if (loadRawText) {
-      fetchUrlText(src)
-        .then((text) => {
-          script.innerHTML = text;
-          document.head.append(script);
-        })
-        .then(resolve)
-        .catch(reject);
-    } else {
-      script.src = src;
-      script.addEventListener('load', async () => {
-        await waitForPageLoaded();
-        resolve();
-      });
-      script.addEventListener('error', () => {
-        script.remove();
-        reject();
-      });
-      document.head.append(script);
-    }
+  if (loadRawText) {
+    const text = await fetchText(src);
+
+    script.innerHTML = text;
+    document.head.append(script);
+
+    return;
+  }
+
+  return new Promise((resolve, reject) => {
+    script.src = src;
+
+    script.addEventListener('load', () => resolve());
+
+    script.addEventListener('error', () => {
+      script.remove();
+      reject();
+    });
+
+    document.head.append(script);
   });
-}
+};
 
 export default loadScript;

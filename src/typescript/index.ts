@@ -1,105 +1,63 @@
-import Logger from '../Logger';
-import fetchUrlText from '../utils/fetchUrlText';
+import fetchText from '../utils/fetchText';
 import loadScript from '../utils/loadScript';
 import waitForPageLoaded from '../utils/waitForPageLoaded';
 
-const tsPath = 'https://cdn.jsdelivr.net/gh/Microsoft/TypeScript@latest/lib/typescriptServices.js';
-const logger = new Logger('[TS]');
+const TS_SERVICE_PATH =
+  'https://cdn.jsdelivr.net/gh/Microsoft/TypeScript@latest/lib/typescriptServices.js';
 
-logger.log(`Loading TypeScript: ${tsPath}`);
-loadScript(tsPath)
-  .then(waitForPageLoaded)
-  .then(async () => {
-    const { ts } = window as any;
+interface GlobalWithTs {
+  ts?: {
+    transpile: (text: string) => string;
+  };
+}
 
-    if (!ts) {
-      throw new ReferenceError('ts is not defined');
-    }
+(async () => {
+  try {
+    await loadScript(TS_SERVICE_PATH);
+    await waitForPageLoaded();
 
-    const { transpile } = ts;
+    const transpile = (globalThis as GlobalWithTs).ts?.transpile;
 
     if (!transpile) {
       throw new ReferenceError('ts.transpile is not defined');
     }
 
-    const verifyTsDom = (dom: Element): dom is HTMLScriptElement => {
-      if (!(dom instanceof HTMLScriptElement)) {
-        return false;
-      }
+    const handleScriptNode = async (script: HTMLScriptElement) => {
+      const { src } = script;
 
-      const { src, type } = dom;
-
-      if (src.length > 0) {
-        if (!/\.ts$/i.test(src)) {
-          return false;
-        }
-      } else if (type.length > 0) {
-        if (!/^text\/typescript$/.test(type)) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-
-      return true;
-    };
-
-    const doTs = async (tsScript: Element) => {
-      if (!verifyTsDom(tsScript)) {
+      if (src && !/\.tsx?$/i.test(src)) {
         return;
       }
 
-      logger.log('Transpiling typescript');
+      const text = src ? await fetchText(src) : script.innerText;
+      const code = transpile(text.trim());
+      const node = document.createElement('script');
 
-      const { src } = tsScript;
-      const tsText = (src.length > 0
-        ? await fetchUrlText(src)
-        : tsScript.innerHTML
-      )
-        .trim();
-      const jsText = transpile(tsText);
-      const jsScript = document.createElement('script');
+      if (script.type === 'module') {
+        node.type = 'module';
+      }
 
-      jsScript.innerHTML = jsText;
-      tsScript.replaceWith(jsScript);
-      logger.info('Transpiled');
+      node.innerText = code;
+      script.replaceWith(node);
     };
 
-    logger.info('Loaded TypeScript. Starting to transpile...');
+    const scripts = Array.from(document.getElementsByTagName('script'));
 
-    await Array.from(document.getElementsByTagName('script'))
-      .filter((script) => verifyTsDom(script))
-      .reduce(async (prevPromise, tsScript, tsIndex, tsScripts) => {
-        await prevPromise;
+    await Promise.allSettled(scripts.map(script => handleScriptNode(script)));
 
-        try {
-          logger.log(`Transpiling ${tsIndex + 1} / ${tsScripts.length}`);
-          doTs(tsScript);
-        } catch (error) {
-          const { message } = error as Error;
-
-          logger.warn(`Transpiling failed: ${message}`);
-        }
-      }, Promise.resolve());
-    logger.info('Transpiled all scripts');
-
-    new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          doTs(node as Element);
+    new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node instanceof HTMLScriptElement) {
+            handleScriptNode(node);
+          }
         });
       });
-    })
-      .observe(document, {
-        childList: true,
-        subtree: true,
-      });
-  })
-  .catch((error) => {
-    const detail = error?.message ?? 'Not found';
-
-    logger.warn(`Loading TypeScript failed: ${detail}`);
-  })
-  .finally(() => {
-    logger.log('End of TypeScript');
-  });
+    }).observe(document, {
+      childList: true,
+      subtree: true,
+    });
+  } catch (error) {
+    // error
+  }
+})();
