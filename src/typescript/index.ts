@@ -3,25 +3,25 @@ import fetchUrlText from '../utils/fetchUrlText';
 import loadScript from '../utils/loadScript';
 import waitForPageLoaded from '../utils/waitForPageLoaded';
 
-const tsPath = 'https://cdn.jsdelivr.net/gh/Microsoft/TypeScript@latest/lib/typescriptServices.js';
+const tsPath =
+  'https://cdn.jsdelivr.net/gh/Microsoft/TypeScript@latest/lib/typescriptServices.js';
 const logger = new Logger('[TS]');
 
 logger.log(`Loading TypeScript: ${tsPath}`);
 loadScript(tsPath)
   .then(waitForPageLoaded)
   .then(async () => {
-    const { ts } = window as any;
-
-    if (!ts) {
+    if (!('ts' in window)) {
       throw new ReferenceError('ts is not defined');
     }
 
-    const { transpile } = ts;
+    const ts = window.ts as object;
 
-    if (!transpile) {
+    if (!('transpile' in ts)) {
       throw new ReferenceError('ts.transpile is not defined');
     }
 
+    const transpile = ts.transpile as (text: string) => string;
     const verifyTsDom = (dom: Element): dom is HTMLScriptElement => {
       if (!(dom instanceof HTMLScriptElement)) {
         return false;
@@ -52,11 +52,9 @@ loadScript(tsPath)
       logger.log('Transpiling typescript');
 
       const { src } = tsScript;
-      const tsText = (src.length > 0
-        ? await fetchUrlText(src)
-        : tsScript.innerHTML
-      )
-        .trim();
+      const tsText = (
+        src.length > 0 ? await fetchUrlText(src) : tsScript.innerHTML
+      ).trim();
       const jsText = transpile(tsText);
       const jsScript = document.createElement('script');
 
@@ -68,7 +66,7 @@ loadScript(tsPath)
     logger.info('Loaded TypeScript. Starting to transpile...');
 
     await Array.from(document.getElementsByTagName('script'))
-      .filter((script) => verifyTsDom(script))
+      .filter(script => verifyTsDom(script))
       .reduce(async (prevPromise, tsScript, tsIndex, tsScripts) => {
         await prevPromise;
 
@@ -83,19 +81,18 @@ loadScript(tsPath)
       }, Promise.resolve());
     logger.info('Transpiled all scripts');
 
-    new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
+    new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
           doTs(node as Element);
         });
       });
-    })
-      .observe(document, {
-        childList: true,
-        subtree: true,
-      });
+    }).observe(document, {
+      childList: true,
+      subtree: true,
+    });
   })
-  .catch((error) => {
+  .catch(error => {
     const detail = error?.message ?? 'Not found';
 
     logger.warn(`Loading TypeScript failed: ${detail}`);

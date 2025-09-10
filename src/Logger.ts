@@ -1,25 +1,26 @@
 /* eslint-disable no-console */
 class Logger {
-  readonly debug: typeof console['debug'] = console.debug;
+  readonly debug: (typeof console)['debug'] = console.debug;
 
-  readonly log: typeof console['log'] = console.log;
+  readonly log: (typeof console)['log'] = console.log;
 
-  readonly warn: typeof console['warn'] = console.warn;
+  readonly warn: (typeof console)['warn'] = console.warn;
 
-  readonly info: typeof console['info'] = console.info;
+  readonly info: (typeof console)['info'] = console.info;
 
-  readonly error: typeof console['error'] = console.error;
+  readonly error: (typeof console)['error'] = console.error;
 
-  readonly trace: typeof console['trace'] = console.trace;
+  readonly trace: (typeof console)['trace'] = console.trace;
 
-  readonly group: typeof console['group'] = console.group;
+  readonly group: (typeof console)['group'] = console.group;
 
-  readonly groupCollapsed: typeof console['groupCollapsed'] = console.groupCollapsed;
+  readonly groupCollapsed: (typeof console)['groupCollapsed'] =
+    console.groupCollapsed;
 
-  readonly groupEnd: typeof console['groupEnd'] = console.groupEnd;
+  readonly groupEnd: (typeof console)['groupEnd'] = console.groupEnd;
 
   constructor(tag: string | null = null) {
-    const binder: any[] = [];
+    const binder: string[] = [];
 
     if (tag !== null) {
       binder.push(tag.toString());
@@ -36,6 +37,6 @@ class Logger {
   }
 }
 
-(globalThis as any).Logger = Logger;
+Object.defineProperty(globalThis, 'Logger', { value: Logger });
 
 export default Logger;
