@@ -126,4 +126,7 @@ if (document.readyState === 'complete') {
   window.addEventListener('load', onLoad);
 }
 
-Object.defineProperty(globalThis, 'loadScript', { value: loadScript });
+Object.defineProperty(globalThis, 'loadScript', {
+  value: loadScript,
+  writable: true,
+});

@@ -8,8 +8,12 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "removeComments": true,
-    "preserveConstEnums": true,
     "sourceMap": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "allowSyntheticDefaultImports": true,
+    "noEmit": true,
   },
+  "include": ["./src"],
+  "exclude": ["./demo"]
 }

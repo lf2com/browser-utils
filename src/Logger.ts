@@ -37,6 +37,9 @@ class Logger {
   }
 }
 
-Object.defineProperty(globalThis, 'Logger', { value: Logger });
+Object.defineProperty(globalThis, 'Logger', {
+  value: Logger,
+  writable: true,
+});
 
 export default Logger;
