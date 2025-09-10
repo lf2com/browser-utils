@@ -8,7 +8,6 @@ const App = ({ text }: AppProps) => (
   </div>
 );
 
-ReactDOM.render(
-  <App text={`This code runs in <script src="*.tsx">`} />,
-  document.getElementById('app2'),
-);
+ReactDOM
+  .createRoot(document.getElementById('app2'))
+  .render(<App text={`This code runs in <script src="*.tsx">`} />);

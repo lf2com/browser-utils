@@ -4,7 +4,6 @@ const App = ({ text }) => (
   </div>
 );
 
-ReactDOM.render(
-  <App text={`This code runs in <script src="*.jsx">`} />,
-  document.getElementById('app1'),
-);
+ReactDOM
+  .createRoot(document.getElementById('app1'))
+  .render(<App text={`This code runs in <script src="*.jsx">`} />);

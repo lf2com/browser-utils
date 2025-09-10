@@ -4,7 +4,7 @@ import loadScript from '../utils/loadScript';
 import waitForPageLoaded from '../utils/waitForPageLoaded';
 
 const tsPath =
-  'https://cdn.jsdelivr.net/gh/Microsoft/TypeScript@latest/lib/typescriptServices.js';
+  'https://cdn.jsdelivr.net/npm/typescript@latest/lib/typescript.min.js';
 const logger = new Logger('[TS]');
 
 logger.log(`Loading TypeScript: ${tsPath}`);
