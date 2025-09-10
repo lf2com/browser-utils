@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 (() => {
   type DoStuffProps = (msg: string) => void;
 

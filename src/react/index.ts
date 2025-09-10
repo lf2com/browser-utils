@@ -4,30 +4,33 @@ import loadScript from '../utils/loadScript';
 import waitForPageLoaded from '../utils/waitForPageLoaded';
 
 const reactPath = 'https://unpkg.com/react@17/umd/react.production.min.js';
-const reactDomPath = 'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
+const reactDomPath =
+  'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
 const babelPath = 'https://unpkg.com/@babel/standalone/babel.min.js';
 const logger = new Logger('[RJ]');
 
 logger.log('Loading React');
 loadScript(reactPath)
-  .then(() => Promise.all([
-    loadScript(reactDomPath),
-    loadScript(babelPath),
-  ]))
+  .then(() => Promise.all([loadScript(reactDomPath), loadScript(babelPath)]))
   .then(waitForPageLoaded)
   .then(async () => {
-    const { Babel } = window as any;
-
-    if (!Babel) {
+    if (!('Babel' in window)) {
       throw new ReferenceError('Babel is not defined');
     }
 
-    const { transform } = Babel;
+    const Babel = window.Babel as object;
 
-    if (!transform) {
+    if (!('transform' in Babel)) {
       throw new ReferenceError('Babel.transform is not defined');
     }
 
+    const transform = Babel.transform as (
+      text: string,
+      opt: {
+        presets: string[];
+        filename: string;
+      }
+    ) => { code: string };
     const verifyReactDom = (dom: Element): dom is HTMLScriptElement => {
       if (!(dom instanceof HTMLScriptElement)) {
         return false;
@@ -58,11 +61,9 @@ loadScript(reactPath)
       logger.log('Transpiling react');
 
       const { src } = reactScript;
-      const reactText = (src.length > 0
-        ? await fetchUrlText(src)
-        : reactScript.innerHTML
-      )
-        .trim();
+      const reactText = (
+        src.length > 0 ? await fetchUrlText(src) : reactScript.innerHTML
+      ).trim();
       const jsText = transform(reactText, {
         presets: ['env', 'react', 'typescript'],
         filename: '.tsx',
@@ -77,7 +78,7 @@ loadScript(reactPath)
     logger.info('Loaded React. Starting to transforming...');
 
     await Array.from(document.getElementsByTagName('script'))
-      .filter((script) => verifyReactDom(script))
+      .filter(script => verifyReactDom(script))
       .reduce(async (prevPromise, reactScript, reactIndex, reactScripts) => {
         await prevPromise;
         logger.log(`Transforming ${reactIndex + 1} / ${reactScripts.length}`);
@@ -92,19 +93,18 @@ loadScript(reactPath)
       }, Promise.resolve());
     logger.info('Transformed all scripts');
 
-    new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
+    new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
           doReact(node as Element);
         });
       });
-    })
-      .observe(document, {
-        childList: true,
-        subtree: true,
-      });
+    }).observe(document, {
+      childList: true,
+      subtree: true,
+    });
   })
-  .catch((error) => {
+  .catch(error => {
     const detail = error?.message ?? 'Not found';
 
     logger.warn(`Loading React failed: ${detail}`);

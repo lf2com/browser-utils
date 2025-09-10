@@ -2,10 +2,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "target": "esnext",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "module": "esnext",
     "strict": true,
     "esModuleInterop": true,
@@ -14,6 +11,5 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node",
   },
 }

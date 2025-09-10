@@ -3,37 +3,38 @@
   const { currentScript } = document;
   const rootPath = currentScript.src.replace(/\w+\.\w+$/, '');
   const moduleNames = currentScript.getAttribute('module').split(/[|;,\s]/);
-  const loadScript = async (src, modules) => new Promise((resolve, reject) => {
-    const script = document.createElement('script');
+  const loadScript = async (src, modules) =>
+    new Promise((resolve, reject) => {
+      const script = document.createElement('script');
 
-    currentScript.getAttributeNames().forEach((name) => {
-      script.setAttribute(name, currentScript.getAttribute(name));
+      currentScript.getAttributeNames().forEach(name => {
+        script.setAttribute(name, currentScript.getAttribute(name));
+      });
+      script.src = src;
+      script.setAttribute('module', modules.join(','));
+      script.addEventListener('load', () => {
+        currentScript.replaceWith(script);
+        resolve();
+      });
+      script.addEventListener('error', () => {
+        script.remove();
+        reject();
+      });
+      document.head.append(script);
     });
-    script.src = src;
-    script.setAttribute('module', modules.join(','));
-    script.addEventListener('load', () => {
-      currentScript.replaceWith(script);
-      resolve();
-    });
-    script.addEventListener('error', () => {
-      script.remove();
-      reject();
-    });
-    document.head.append(script);
-  });
 
   try {
     console.group('Loading browser utils');
     await loadScript(
       '/scriptLoader.js',
-      moduleNames.map((name) => `/${name}`),
+      moduleNames.map(name => `/${name}`)
     );
     console.info('Development mode');
-  } catch (e) {
+  } catch {
     try {
       await loadScript(
         `${rootPath}../../dist/scriptLoader.js`,
-        moduleNames.map((name) => `${rootPath}../../dist/${name}`),
+        moduleNames.map(name => `${rootPath}../../dist/${name}`)
       );
     } catch (err) {
       console.warn('Failed to load JS browser utils', err);

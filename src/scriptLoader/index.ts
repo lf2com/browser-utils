@@ -4,7 +4,9 @@ import waitForPageLoaded from '../utils/waitForPageLoaded';
 
 const logger = new Logger('[SL]');
 const currentScript = document.currentScript!;
-const currentRoot = currentScript.getAttribute('src')?.replace(/\w+(\.\w+)?$/, '');
+const currentRoot = currentScript
+  .getAttribute('src')
+  ?.replace(/\w+(\.\w+)?$/, '');
 const loadEvent = currentScript.getAttribute('event:load') ?? 'scriptload';
 const styleLoading = document.createElement('style');
 const domLoading = document.createElement('div');
@@ -20,16 +22,15 @@ const setLoadingMessage = (message: string, progress?: number) => {
 };
 const modules = (currentScript.getAttribute('module') ?? '')
   .split(/[|;,\s]/)
-  .map((s) => s.trim())
-  .filter((s) => s.length > 0);
+  .map(s => s.trim())
+  .filter(s => s.length > 0);
 const loadNextModule = async (index = 0) => {
   const module = modules[index];
 
   if (module) {
-    const root = (/^~/.test(module)
+    const root = /^~/.test(module)
       ? `${currentRoot}${module.replace(/^~\//, '')}`
-      : module
-    );
+      : module;
     const defaultPath = `${root}.js`;
     const progress = (index + 1) / modules.length;
 
@@ -38,7 +39,7 @@ const loadNextModule = async (index = 0) => {
 
     try {
       await loadScript(defaultPath);
-    } catch (error) {
+    } catch {
       const backupPath = `${root}/index.js`;
 
       logger.log(`Loading failed. Try to load script path: ${backupPath}`);
@@ -46,7 +47,7 @@ const loadNextModule = async (index = 0) => {
       try {
         await loadScript(backupPath);
         logger.info(`Loaded script: ${module}`);
-      } catch (err) {
+      } catch {
         logger.warn(`Loading failed. Script not found: ${module}`);
       }
     } finally {
@@ -102,10 +103,9 @@ styleLoading.innerHTML = `
   }
 `;
 document.head.append(styleLoading);
-waitForPageLoaded()
-  .then(() => {
-    document.body.prepend(domLoading);
-  });
+waitForPageLoaded().then(() => {
+  document.body.prepend(domLoading);
+});
 
 async function onLoad() {
   logger.log('Loading modules');
@@ -126,4 +126,4 @@ if (document.readyState === 'complete') {
   window.addEventListener('load', onLoad);
 }
 
-(globalThis as any).loadScript = loadScript;
+Object.defineProperty(globalThis, 'loadScript', { value: loadScript });
