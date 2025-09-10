@@ -25,16 +25,15 @@
     interface AppProps {
       text: string;
     }
-    
+
     const App = ({ text }: AppProps) => (
       <div>
         {text}
       </div>
     );
 
-    ReactDOM.render(
-      <App text={`This code runs in <script type="text/react">`} />,
-      document.getElementById('app3'),
-    );
+    ReactDOM
+      .createRoot(document.getElementById('app3'))
+      .render(<App text={`This code runs in <script type="text/react">`} />);
   </script>
 </html>

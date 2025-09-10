@@ -3,15 +3,19 @@ import fetchUrlText from '../utils/fetchUrlText';
 import loadScript from '../utils/loadScript';
 import waitForPageLoaded from '../utils/waitForPageLoaded';
 
-const reactPath = 'https://unpkg.com/react@17/umd/react.production.min.js';
+const reactPath = 'https://unpkg.com/umd-react/dist/react.production.min.js';
 const reactDomPath =
-  'https://unpkg.com/react-dom@17/umd/react-dom.production.min.js';
+  'https://unpkg.com/umd-react/dist/react-dom.production.min.js';
 const babelPath = 'https://unpkg.com/@babel/standalone/babel.min.js';
 const logger = new Logger('[RJ]');
 
 logger.log('Loading React');
-loadScript(reactPath)
-  .then(() => Promise.all([loadScript(reactDomPath), loadScript(babelPath)]))
+
+Promise.all([
+  loadScript(reactPath),
+  loadScript(reactDomPath),
+  loadScript(babelPath),
+])
   .then(waitForPageLoaded)
   .then(async () => {
     if (!('Babel' in window)) {
@@ -65,12 +69,12 @@ loadScript(reactPath)
         src.length > 0 ? await fetchUrlText(src) : reactScript.innerHTML
       ).trim();
       const jsText = transform(reactText, {
-        presets: ['env', 'react', 'typescript'],
+        presets: ['react', 'typescript'],
         filename: '.tsx',
       }).code;
       const jsScript = document.createElement('script');
 
-      jsScript.innerHTML = jsText;
+      jsScript.innerHTML = `{${jsText}}`;
       reactScript.replaceWith(jsScript);
       logger.info('Transpiled');
     };
