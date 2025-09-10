@@ -12,7 +12,10 @@ export default defineConfig(
     name: 'js/ts',
     files: ['**/*.{js,ts,tsx}'],
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
